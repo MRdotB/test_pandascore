@@ -1,4 +1,5 @@
 import upperFirst from 'lodash.upperfirst';
+import timestamp from 'time-stamp';
 
 export function sortAlph(a, b) {
 	if (a.name < b.name) {
@@ -14,25 +15,25 @@ export function championCleanSlug(c) {
 	c.name = c.name.replace(/ |'/, '');
 	switch (c.name) {
 		case 'VelKoz':
-			c.name = 'Velkoz'
+			c.name = 'Velkoz';
 			break;
 		case 'LeBlanc':
-			c.name = 'Leblanc'
+			c.name = 'Leblanc';
 			break;
 		case 'ChoGath':
-			c.name = 'Chogath'
+			c.name = 'Chogath';
 			break;
 		case 'Fiddlesticks':
-			c.name = 'FiddleSticks'
+			c.name = 'FiddleSticks';
 			break;
 		case 'Dr.Mundo':
-			c.name = 'DrMundo'
+			c.name = 'DrMundo';
 			break;
 		case 'Wukong':
-			c.name = 'MonkeyKing'
+			c.name = 'MonkeyKing';
 			break;
 		case 'KhaZix':
-			c.name = 'Khazix'
+			c.name = 'Khazix';
 			break;
 	}
 	return c;
@@ -53,11 +54,11 @@ export function reduceRole(acc, champion) {
 
 function reduceById(champId) {
 	return function r(acc, match) {
-		if (match.champion === champId) {
+		if (parseInt(match.champion, 10) === parseInt(champId, 10)) {
 			acc.push(match);
 		}
 		return acc;
-	}
+	};
 }
 
 function groupByLane(acc, match) {
@@ -73,7 +74,7 @@ function groupByLane(acc, match) {
 		acc[index].played++;
 	} else {
 		acc.push({
-			lane: lane,
+			lane,
 			played: 1
 		});
 	}
@@ -84,10 +85,10 @@ function barChartFormat(matchs) {
 	const totalMatchs = matchs.reduce((acc, match) => (acc + match.played), 0);
 	return function r(match) {
 		return {
-			percentage: 100 * match.played / totalMatchs,
-			lane: upperFirst(match.lane.toLowerCase())
+			lane: 100 * match.played / totalMatchs,
+			name: upperFirst(match.lane.toLowerCase())
 		};
-	}
+	};
 }
 
 export function popularityRole(matchs, champId) {
@@ -96,11 +97,34 @@ export function popularityRole(matchs, champId) {
 		.reduce(r1, [])
 		.reduce(groupByLane, []);
 	const m1 = barChartFormat(rMatchs);
-	return rMatchs.map(m1);
+	const map = rMatchs.map(m1);
+	console.log('map', map);
+	return map;
 }
-/*
-export popularityOverTime() {
 
+function sortTime(a, b) {
+	return a.timestamp - b.timestamp;
+}
+
+function groupByMonth(acc, match) {
+	const formattedTimestamp = timestamp('YYYY.MM', new Date(match.timestamp * 1000));
+	const index = acc.findIndex(match => match.formattedTimestamp === formattedTimestamp);
+	if (index > -1) {
+		acc[index].games++;
+	} else {
+		acc.push({
+			formattedTimestamp,
+			games: 1
+		});
 	}
-	*/
+	return acc;
+}
+
+export function popularityOverTime(matchs, champId) {
+	const r1 = reduceById(champId);
+	return matchs
+		.reduce(r1, [])
+		.sort(sortTime)
+		.reduce(groupByMonth, []);
+}
 

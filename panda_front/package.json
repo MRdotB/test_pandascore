@@ -3,19 +3,38 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
-    "react-scripts": "0.8.5"
+    "eslint-config-xo-react": "^0.10.0",
+    "eslint-plugin-react": "^6.8.0",
+    "react-scripts": "0.8.5",
+    "xo": "^0.17.1"
   },
   "dependencies": {
     "fuzzysearch": "^1.0.3",
     "lodash.upperfirst": "^4.3.1",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
-    "recharts": "^0.20.5"
+    "recharts": "^0.20.5",
+    "time-stamp": "^1.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "xo"
+  },
+  "xo": {
+    "esnext": true,
+    "extends": "xo-react",
+    "envs": [
+      "node",
+      "browser",
+      "es6"
+    ],
+    "rules": {
+      "unicorn/filename-case": 0,
+      "react/forbid-component-props": 0,
+      "react/no-unused-prop-types": 0
+    }
   }
 }

@@ -1,40 +1,37 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 
 import fuzzysearch from 'fuzzysearch';
-import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	Legend
-} from Recharts;
 import {
 	sortAlph,
 	championCleanSlug,
 	reduceRole,
-	popularityRole
+	popularityRole,
+	popularityOverTime
 } from './utils';
+
+import Modal from './Modal';
 
 class Filter extends Component {
 	constructor() {
-		super()
+		super();
 
-		const champions = [];
-		const matchs = [];
 		this.state = {
 			champions: [],
 			roles: [],
+			matchs: [],
 			filter: '',
-			activeRole: [],
-			modal: true 
+			modal: false,
+			popularityRoleData: [],
+			popularityOverTimeData: [],
+			// set default img to prevent flex-grow bug
+			champion: 'Annie'
 		};
 
 		this.filtering = this.filtering.bind(this);
 		this.handleSearch = this.handleSearch.bind(this);
 		this.handleCheck = this.handleCheck.bind(this);
 		this.handleCloseModal = this.handleCloseModal.bind(this);
+		this.handleOpenModal = this.handleOpenModal.bind(this);
 	}
 
 	componentDidMount() {
@@ -44,7 +41,7 @@ class Filter extends Component {
 	getData() {
 		fetch('/champions.json', {
 			method: 'GET',
-			headers: { 'Content-Type': 'application/json' }
+			headers: {'Content-Type': 'application/json'}
 		})
 		.then(res => res.json())
 		.then(data => {
@@ -53,16 +50,16 @@ class Filter extends Component {
 
 			this.champions = champions;
 			this.matchs = data.matches;
-			console.log(this.matchs);
+			this.setState({matchs: data.matches});
 			this.setState({champions});
 			this.setState({roles});
-			popularityRole(this.matchs, 1);
 		})
 		.then(() => console.log(this.state))
 		.catch(err => console.log('error', err));
 	}
 
 	filtering() {
+		console.log(this.state.roles);
 		const activeRoles = this.state.roles.reduce((acc, role) => {
 			if (role.checked) {
 				acc.push(role.name);
@@ -79,7 +76,6 @@ class Filter extends Component {
 		this.setState({champions});
 	}
 
-
 	handleSearch(e) {
 		this.setState({filter: e.target.value}, this.filtering);
 	}
@@ -94,12 +90,22 @@ class Filter extends Component {
 		this.setState({roles}, this.filtering);
 	}
 
-	handleCloseModal(e) {
+	handleCloseModal() {
 		this.setState({modal: false});
 	}
 
 	handleOpenModal(e) {
+		const {name, championId} = e.target.dataset;
+		const popularityRoleData = popularityRole(this.state.matchs, championId);
+		const popularityOverTimeData = popularityOverTime(this.state.matchs, championId);
+		this.setState({champion: name});
 
+		this.setState({modal: true}, () => {
+			this.setState({popularityRoleData});
+			this.setState({popularityOverTimeData});
+		});
+
+		this.setState({popularityOverTime: popularityOverTime(this.state.matchs, e.target.dataset.championId)});
 	}
 
 	render() {
@@ -128,45 +134,26 @@ class Filter extends Component {
 			img: {
 				width: '81px',
 				height: '81px'
-			},
-			modalOpen: {
-				position: 'fixed',
-				width: '100%',
-				height: '100%',
-				backgroundColor: 'rgba(0,0,0,0.5)',
-			},
-			modalClosed: {
-				display: 'none'
-			},
-			modalBody: {
-				display: 'flex',
-				flexDirection: 'row',
-				flexWrap: 'wrap',
-				justifyContent: 'center',
-				alignItems: 'center',
-				backgroundColor: '#fff',
-				borderRadius: '2px',
-				margin: '10vh 10vw',
-				width: '80vw',
-				height: '80vh'
 			}
-		}
+		};
 
-		const {champions, roles, filter, modal} = this.state;
+		const {champions, roles, filter, modal, popularityRoleData, popularityOverTimeData, champion} = this.state;
 		return (
 			<div>
-				<div onClick={this.handleCloseModal} style={modal ? styles.modalOpen : styles.modalClosed}>
-					<div style={styles.modalBody}>
-					lol
-					</div>
-				</div>
+				<Modal
+					modal={modal}
+					onHandleCloseModal={this.handleCloseModal}
+					champion={champion}
+					popularityRoleData={popularityRoleData}
+					popularityOverTimeData={popularityOverTimeData}
+					/>
 				<h1 style={styles.title}>Champion Filter Panda</h1>
 				<div>
 					<h2 style={styles.title}>Search</h2>
 					<input style={styles.search} type="search" placeholder="Champions" value={filter} onChange={this.handleSearch}/>
 					<h3 style={styles.title}>Roles</h3>
 					<div style={styles.wrapper}>
-						{roles.map((role, i) => (
+						{roles.length > 0 && roles.map((role, i) => (
 							<div style={styles.filter} key={i}>
 								<input onChange={this.handleCheck} name={role.name} value={role.checked} type="checkbox"/><label>{role.name}</label>
 							</div>
@@ -177,11 +164,10 @@ class Filter extends Component {
 				<div style={styles.wrapper}>
 					{champions.map(champion => (
 						<div style={styles.box} key={champion.id}>
-							<img style={styles.img} role="presentation" src={'http://ddragon.leagueoflegends.com/cdn/6.24.1/img/champion/' + champion.name + '.png'} />
+							<img onClick={this.handleOpenModal} data-name={champion.name} data-champion-id={champion.id} style={styles.img} role="presentation" src={'http://ddragon.leagueoflegends.com/cdn/6.24.1/img/champion/' + champion.name + '.png'}/>
 						</div>
 					))}
 				</div>
-				
 			</div>
 		);
 	}
