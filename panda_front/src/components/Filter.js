@@ -54,12 +54,10 @@ class Filter extends Component {
 			this.setState({champions});
 			this.setState({roles});
 		})
-		.then(() => console.log(this.state))
 		.catch(err => console.log('error', err));
 	}
 
 	filtering() {
-		console.log(this.state.roles);
 		const activeRoles = this.state.roles.reduce((acc, role) => {
 			if (role.checked) {
 				acc.push(role.name);
